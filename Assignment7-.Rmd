@@ -29,6 +29,7 @@ knitr::opts_chunk$set(echo = TRUE)
 movies3<-read.table("movies3_updated.tsv",sep="",header=TRUE)
 library(dplyr)
 library(ggplot2)
+library(moments)
 ```
 
 # Introduction
@@ -73,7 +74,9 @@ e. Make a histogram of the residuals of your model. Based on the histogram, do y
 f. Estimate hatvalues for each observation that you used to estimate your model. Do any hatvalues exceed the critical value? Based on this analysis, do you hvae any reason to doubt the validity of your model? \textbf{[2 points]}
 g. Based on your analysis in f.), estimate your model again, but remove any outliers. Print a summary of your model and again test for the null hypothesis that $\beta_1 = 0$. What do you conclude? Based on this new model, would your advice to the movie studio in question d. change? \textbf{[2 points]}
 
-saved the dataset from previous 3 weeks called it updated tsv
+----------------------------------------------------IMPORTANT---------------------------------------------------------
+ **we uploaded the adjusted dataset "movies3" from the previous 3 weeks and called it "movies3_updated.tsv". The reason for this is that certain exercises for week 4 and week 5 needed variables from the previous week. An example of this would be the variable "PR" in week 4. We uploaded our movies3 dataset to this rmd file with the help of our TA**
+----------------------------------------------------------------------------------------------------------------------
 
 *step a*
 
@@ -84,53 +87,59 @@ summary(lm)
 coef_budget <- summary(lm)$coefficients["budget", "Estimate"] 
 int_budget <- summary(lm)$coefficients["(Intercept)", "Estimate"] 
 se_budget <- summary(lm)$coefficients["budget", "Std. Error"] 
-p_budget <- summary(lm)$coefficients["budget", 4] 
 ``` 
 
 **Your Answer:**
 
-Write your formulated response here.
-The p-value is 0.3737, even with very high significance levels $\alpha$, the p-value will still be larger than $\alpha$. Based on the fact that p-value > $\alpha$, we cannot reject the null hypothesis of $\beta_1 = 0$. 
+In the summary we can see the estimates and standard errors for beta0 and beta1. We can also check the fit of our estimated model with R-squared.
 
 *step b*
 
 ```{r}
 #WRITE YOUR CODE HERE
-coef_budget <- summary(lm)$coefficients["budget", "Estimate"] 
 print(coef_budget) 
 ```
 
 **Your Answer:**
 
-Write your formulated response here.
-For each additional unit of budget, the Profitability Ratio (PR) decreases by -3.688924e-05. 
+For each additional unit (euros or dollars) of budget, the Profitability Ratio (PR) decreases by -3.688924e-05. 
 
 *step c*
 
 ```{r}
 #WRITE YOUR CODE HERE
-# Test for the null hypothesis that beta_1 = 0. Report the p-value and state your conclusion. 
+p_budget <- summary(lm)$coefficients["budget", 4] 
 print(p_budget) 
 ```
 
 **Your Answer:**
 
-Write your formulated response here.
-Because we cannot reject that the slope is not zero, it means that a change in budget has no correlation with the Profitability Ratio. We therefore conclude that Chantal is correct. 
+The p-value is 0.3737, even with very high significance levels $\alpha$, the p-value will still be larger than $\alpha$. Based on the fact that p-value > $\alpha$, we cannot reject the null hypothesis of $\beta_1 = 0$.
 
 *step d*
 
 ```{r}
 #WRITE YOUR CODE HERE
-# Make a histogram of the residuals of your model. Based on the histogram, do you have any reason to doubt the validity of your model? Explain. 
+print(p_budget)
+```
+
+**Your Answer:**
+Because we cannot reject that the slope is not zero, it means that a change in budget has no significant correlation with the Profitability Ratio. We therefore conclude that Chantal is correct. We would advise the movie studio not to decrease the budget of movies in order to increase the profitability ratio of the movies. Instead we advise the movie studio to look at other variables that might impact the profitability ratio. 
+
+*step e*
+
+```{r}
+#WRITE YOUR CODE HERE
 hist(residuals(lm), breaks = 5, 
     main = "Histogram of Residual Levels", 
     xlab = "Residuals")
+skewness <- skewness(lm$residuals)
+print(skewness)
 ```
 
 **Your Answer:**
 
-There are significantly more observations on the left of zero than there are on the right. The first assumption states that residual levels should be normally distributed and the second assumption states that the population mean should be 0, both of which are not the case as we can derive from the histogram.
+The residuals should be normally distributed, but when looking at the graph and at the skewness value of 23.44 we see that the residuals are strongly right-skewed. This raises concerns about the validity of our model.
 
 *step f*
 
@@ -147,30 +156,23 @@ print(sus_fraction)
 
 **Your Answer:**
 
-Write your formulated response here.
-66 out of the 555 observations are suspect, which is 11.89% of total observations
+66 out of the 555 observations are suspect and exceed the critical value, which is 11.89% of total observations.11.89% of all observations being an outlier is quite high and could negatively influence the estimators of b0 and b1. This gives reason to doubt the validity of the model. However, these observations are still real and should not just be omitted to create a better model. 
 
 *step g*
 
 ```{r}
 #WRITE YOUR CODE HERE
+no_outliers <- hatvalue <= levcrit
+lm_new <- update(lm, data = lm$model[no_outliers,])
+p_newbudget <- summary(lm_new)$coefficients["budget", 4] 
+summary(lm_new)
+print(p_newbudget)
 
 ```
 
 **Your Answer:**
 
-Write your formulated response here.
-
-*step g*
-
-```{r}
-#WRITE YOUR CODE HERE
-
-```
-
-**Your Answer:**
-
-Write your formulated response here.
+We see that the estimators of beta0 and beta1 changed after we removed all 66 outliers that exceeded the critical value of n/2. We see that our p-value decreased from 0.37 to 0.23. This p-value is still too large to be smaller than any reasonable significance levels (alpha). Based on this observation we still cannot reject the null hypothesis. 
 
 2.
 
@@ -194,7 +196,7 @@ ggplot(
 
 **Your Answer:**
 
-Write your formulated response here.
+We excluded any movies that had zero runtime and no vote average as these movies had no data. Based on the scatterplot we see a potential positive correlation between vote average and runtime.
 
 *step b*
 
@@ -202,17 +204,17 @@ Write your formulated response here.
 #WRITE YOUR CODE HERE
 
 scatterplot_data<-subset(movies3,runtime !=0 & vote_average!=0)
-model<-lm(vote_average ~ runtime,movies3,subset = runtime !=0 & vote_average!=0)
-scatterplot_data$vote_prediction<- predict(model)
-scatterplot_data$residual<-residuals(model)
+reg_model<-lm(vote_average ~ runtime,movies3,subset = runtime !=0 & vote_average!=0)
+scatterplot_data$vote_prediction<- predict(reg_model)
+scatterplot_data$residual<-residuals(reg_model)
 head(
-  scatterplot_data[order((residuals(model)), decreasing = TRUE), c("title", "runtime", "vote_average","vote_prediction","residual")], 1)
+  scatterplot_data[order((residuals(reg_model)), decreasing = TRUE), c("title", "runtime", "vote_average","vote_prediction","residual")], 1)
 
 ```
 
 **Your Answer:**
 
-Write your formulated response here.
+We first created a new dataset, which excluded irrelevant observations (see a). Next, we made a regression model for determining the vote average based on the runtime. Using this model we created a new variable which predicted the average voting based on runtime. After this we added a variable for the residuals that showed the difference between actual vote average and predicted vote average. Finally we ordered the residual data with largest residual values first. Based on this data we can conclude that "The Lion King" overperformed its vote_average the most with 2.22 points.
 
 # Week 5
   
