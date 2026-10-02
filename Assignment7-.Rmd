@@ -1,7 +1,7 @@
 ---
 title: "QRM II Graded Assignment (7)"
 subtitle: "Period 1, 2026"
-author: "Fill in your group number and names here"
+author: "K.Stokvis 2859043, M.Braet 2860223, O.Keijser 2862760, Z.Cheung 2802886, K.Hendriks 289447"
 date:  "`r format(Sys.Date(), '%d-%m-%Y')`"
 output:
   pdf_document:
@@ -26,6 +26,9 @@ format:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+movies3<-read.table("movies3_updated.tsv",sep="",header=TRUE)
+library(dplyr)
+library(ggplot2)
 ```
 
 # Introduction
@@ -70,63 +73,84 @@ e. Make a histogram of the residuals of your model. Based on the histogram, do y
 f. Estimate hatvalues for each observation that you used to estimate your model. Do any hatvalues exceed the critical value? Based on this analysis, do you hvae any reason to doubt the validity of your model? \textbf{[2 points]}
 g. Based on your analysis in f.), estimate your model again, but remove any outliers. Print a summary of your model and again test for the null hypothesis that $\beta_1 = 0$. What do you conclude? Based on this new model, would your advice to the movie studio in question d. change? \textbf{[2 points]}
 
+saved the dataset from previous 3 weeks called it updated tsv
+
 *step a*
 
 ```{r}
 #WRITE YOUR CODE HERE
-movies3<-read.table("movies3.csv",sep="",header=TRUE)
-
-```
+lm <- lm(PR~budget, data=movies3) 
+summary(lm) 
+coef_budget <- summary(lm)$coefficients["budget", "Estimate"] 
+int_budget <- summary(lm)$coefficients["(Intercept)", "Estimate"] 
+se_budget <- summary(lm)$coefficients["budget", "Std. Error"] 
+p_budget <- summary(lm)$coefficients["budget", 4] 
+``` 
 
 **Your Answer:**
 
 Write your formulated response here.
+The p-value is 0.3737, even with very high significance levels $\alpha$, the p-value will still be larger than $\alpha$. Based on the fact that p-value > $\alpha$, we cannot reject the null hypothesis of $\beta_1 = 0$. 
 
 *step b*
 
 ```{r}
 #WRITE YOUR CODE HERE
-
+coef_budget <- summary(lm)$coefficients["budget", "Estimate"] 
+print(coef_budget) 
 ```
 
 **Your Answer:**
 
 Write your formulated response here.
+For each additional unit of budget, the Profitability Ratio (PR) decreases by -3.688924e-05. 
 
 *step c*
 
 ```{r}
 #WRITE YOUR CODE HERE
-
+# Test for the null hypothesis that beta_1 = 0. Report the p-value and state your conclusion. 
+print(p_budget) 
 ```
 
 **Your Answer:**
 
 Write your formulated response here.
+Because we cannot reject that the slope is not zero, it means that a change in budget has no correlation with the Profitability Ratio. We therefore conclude that Chantal is correct. 
 
 *step d*
 
 ```{r}
 #WRITE YOUR CODE HERE
-
+# Make a histogram of the residuals of your model. Based on the histogram, do you have any reason to doubt the validity of your model? Explain. 
+hist(residuals(lm), breaks = 5, 
+    main = "Histogram of Residual Levels", 
+    xlab = "Residuals")
 ```
 
 **Your Answer:**
 
-Write your formulated response here.
+There are significantly more observations on the left of zero than there are on the right. The first assumption states that residual levels should be normally distributed and the second assumption states that the population mean should be 0, both of which are not the case as we can derive from the histogram.
 
-*step e*
+*step f*
 
 ```{r}
 #WRITE YOUR CODE HERE
-
+n <- length(lm$model$PR) 
+levcrit <- 2/n 
+hatvalue <- hatvalues(lm) 
+suspect <- length(hatvalue[hatvalue>levcrit]) 
+print(suspect) 
+sus_fraction = suspect/n 
+print(sus_fraction) 
 ```
 
 **Your Answer:**
 
 Write your formulated response here.
+66 out of the 555 observations are suspect, which is 11.89% of total observations
 
-*step f*
+*step g*
 
 ```{r}
 #WRITE YOUR CODE HERE
@@ -157,7 +181,15 @@ b. Using the insights from the scatterplot, your linear model, and your data, fi
 
 ```{r}
 #WRITE YOUR CODE HERE
+library(ggplot2)
 
+ggplot(
+  subset(movies3,runtime !=0 & vote_average!=0), 
+  aes(x = runtime, y = vote_average)) + 
+  geom_point(na.rm=TRUE) + 
+  geom_smooth(method = "lm", na.rm=TRUE) +
+  scale_x_continuous(limits = c(55,205)) +
+  scale_y_continuous(limits = c(0,10))
 ```
 
 **Your Answer:**
@@ -168,6 +200,13 @@ Write your formulated response here.
 
 ```{r}
 #WRITE YOUR CODE HERE
+
+scatterplot_data<-subset(movies3,runtime !=0 & vote_average!=0)
+model<-lm(vote_average ~ runtime,movies3,subset = runtime !=0 & vote_average!=0)
+scatterplot_data$vote_prediction<- predict(model)
+scatterplot_data$residual<-residuals(model)
+head(
+  scatterplot_data[order((residuals(model)), decreasing = TRUE), c("title", "runtime", "vote_average","vote_prediction","residual")], 1)
 
 ```
 
