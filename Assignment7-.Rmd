@@ -84,9 +84,6 @@ g. Based on your analysis in f.), estimate your model again, but remove any outl
 #WRITE YOUR CODE HERE
 lm <- lm(PR~budget, data=movies3) 
 summary(lm) 
-coef_budget <- summary(lm)$coefficients["budget", "Estimate"] 
-int_budget <- summary(lm)$coefficients["(Intercept)", "Estimate"] 
-se_budget <- summary(lm)$coefficients["budget", "Std. Error"] 
 ``` 
 
 **Your Answer:**
@@ -97,6 +94,7 @@ In the summary we can see the estimates and standard errors for beta0 and beta1.
 
 ```{r}
 #WRITE YOUR CODE HERE
+coef_budget <- summary(lm)$coefficients["budget", "Estimate"] 
 print(coef_budget) 
 ```
 
@@ -130,11 +128,11 @@ Because we cannot reject that the slope is not zero, it means that a change in b
 
 ```{r}
 #WRITE YOUR CODE HERE
+skewness <- skewness(lm$residuals)
+print(skewness)
 hist(residuals(lm), breaks = 5, 
     main = "Histogram of Residual Levels", 
     xlab = "Residuals")
-skewness <- skewness(lm$residuals)
-print(skewness)
 ```
 
 **Your Answer:**
@@ -165,8 +163,8 @@ print(sus_fraction)
 no_outliers <- hatvalue <= levcrit
 lm_new <- update(lm, data = lm$model[no_outliers,])
 p_newbudget <- summary(lm_new)$coefficients["budget", 4] 
-summary(lm_new)
 print(p_newbudget)
+summary(lm_new)
 
 ```
 
@@ -196,7 +194,7 @@ ggplot(
 
 **Your Answer:**
 
-We excluded any movies that had zero runtime and no vote average as these movies had no data. Based on the scatterplot we see a potential positive correlation between vote average and runtime.
+We excluded any movies that had zero runtime and no vote average as these movies had no relevant data. Based on the scatterplot we see a potential positive correlation between vote average and runtime.
 
 *step b*
 
