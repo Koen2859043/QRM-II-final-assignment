@@ -292,7 +292,7 @@ summary(model)
 **Your Answer:**
 **outliers hier niet weggehaald, dat is nog een mogelijkheid, moeten de units er ook bij?**
 (All interpretations are made under the ceteris paribus assumption.)
-A increase in the budget with 1% will lower the PR value by -6113.8. 
+A increase in the budget with 1% will lower the PR value by -61.138. 
 If the film has the genre of "Comedy" the PR value will be 2283.0 lower than if the film was of the categorie "Other" (default in this model). If the film has the genre "Drama" the PR will be 3121.0 lower than if the film was of the categorie "Other" and if the movie was of the genre "Thriller" than the PR value will be 9424.9 higher than if the movie was of the categorie "Other". 
 If the movie is brought out one year later, the PR value will be 183.4 higher. 
 We can also try to interpet the intercept, however then we would get a value for a movie that has a budget of one and is of the genre "Other" and is released in year zero, wich is not meaningfull because the year zero is outside of the relevant range of (our) data. 
@@ -301,24 +301,58 @@ We can also try to interpet the intercept, however then we would get a value for
 *step c*
 
 ```{r}
-#WRITE YOUR CODE HERE
+# Step c: filter out missing budget/revenue (0 = unknown) and estimate the model
+movies3_c <- movies3 %>%
+  filter(budget > 0, revenue > 0)
 
+model_c <- lm(revenue ~ log(budget) + genre2 + release_year + runtime, data = movies3_c)
+summary(model_c)
+
+# New movie
+newbudget  <- c(40000000)
+newgenre   <- c("Comedy")
+newyear    <- c(2026)
+newruntime <- c(160)
+
+newdata <- data.frame(newbudget, newgenre, newyear, newruntime)
+colnames(newdata) <- c("budget", "genre2", "release_year", "runtime")
+
+predict(model_c, newdata, interval = "prediction")
 ```
 
 **Your Answer:**
 
-Write your formulated response here.
+The estimated revenue is 289,051,538 dollar. The 95% prediction interval is very big the lower boundary is -9,381,514 and the upper boundary is 587,484,591 dollar. The lower boundary doesn't really make sense in reality, because revenue cannot be negative. For this question we used 40,000,000 as the budget and not 40,000,0000 because we assumed this was a typo.
 
 *step d*
 
 ```{r}
-#WRITE YOUR CODE HERE
+plot(model_c$model$runtime, model_c$residuals,
+xlab = "Runtime",
+ylab = "Residuals",
+main = "Residual Plot for model_c")
+
+plot(model_c$model$release_year, model_c$residuals,
+xlab = "Release Year",
+ylab = "Residuals",
+main = "Residual Plot for model_c")
+
+plot(model_c$residuals ~ model_c$model$`log(budget)`, 
+xlab = "log(budget)", 
+ylab = "Residuals", 
+main = "Residual Plot for model_c")
+
+boxplot(model_c$residuals~model_c$model$genre2,
+xlab = "Genre2",
+ylab = "Residuals",
+main = "Residual Plot for model_c")
+
 
 ```
 
 **Your Answer:**
 
-Write your formulated response here.
+Runtime and release year seem to be pretty much homoskedastic. The variance of the log(budget) seems to increase when the log(budget) increases, so there is heteroskedasticity. The variance of other in genre2 is much larger than for the other genre2 categories. This also implicates heteroskedasticity.
 
 *step e*
 
