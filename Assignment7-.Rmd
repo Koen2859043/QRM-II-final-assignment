@@ -358,7 +358,34 @@ Runtime and release year seem to be pretty much homoskedastic. The variance of t
 
 ```{r}
 #WRITE YOUR CODE HERE
+#The movie is set in Germany. The director wants to make the movie with only german-speaking actors. The executive producer is strongly against this, as she is afraid that movies that are not english spoken will have a low profit ratio. Estimate a model that can test whether the language spoken impacts the PR of this specific movie. Use an appropriate hypothesis test to test whether the language. What would you advise the movie studio regarding the language to be spoken?
+
+movies3$language_EN <- ifelse(movies3$original_language == "en",1,0)
+
+model_e <- lm(formula = PR ~ budget + genre + release_year + runtime + language_EN, data = movies3)
+
+newbudget  <- c(40000000)
+newgenre   <- c("Comedy")
+newyear    <- c(2026)
+newruntime <- c(160)
+english <- c(1,0)
+
+newdata <- data.frame(newbudget, newgenre, newyear, newruntime, english)
+colnames(newdata) <- c("budget", "genre", "release_year", "runtime", "language_EN")
+
+coefficients <- summary(model_e)$coefficients
+
+t_stat <- coefficients["language_EN", "t value"]
+degrees_of_freedom <- df.residual(model_e)
+
+p_value <- pt(t_stat, df = degrees_of_freedom, lower.tail = FALSE)
+
+p_value
+
 
 ```
-
-
+H_0: language_EN coefficient <= 0, H_1: language_EN coefficient > 0
+We have chosen a righ tailed test because we want to test if an english spoken movie is expected to have a higher profitability ratio than a non-english spoken movie. 
+significance level: 0.05 
+The p value is calculated at 0.325 > 0.05 which means we reject the null hypothesis. 
+It then follows that the spoken language of a movie has a scientifically significant effect on the profitability ratio. We advise the movie studio to use english as the spoken language.
