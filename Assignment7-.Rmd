@@ -266,9 +266,9 @@ ggplot(PR_year_LU,aes(x = release_year, y = mean_PR)) +
 
 **Your Answer:**
 
-(In the plot shown above, two "outliers" are deleted from the data set, to be able to read the plot without difficulty. These are values that have a PR value above 4000.)
+(In the plot shown above, two "outliers" are deleted from the data set, we have done this to read the plot without difficulty. These are values that have a PR value above 4000.)
 
-The plot does not clearly indicate any trend of the PR values over time.
+The plot does not clearly indicate any trend of the PR values over time. So from this plot we can not conclude any trend of PR value over time.
 
 
 
